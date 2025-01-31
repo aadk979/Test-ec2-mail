@@ -60,5 +60,40 @@ async function forwardEmail({ alias, from, subject, text, html }) {
   console.log(`Forwarded email for alias ${alias} to ${process.env.FORWARD_TO}`);
 }
 
+// Function to send 5 consecutive emails when the server starts
+async function sendConsecutiveEmails() {
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    secure: false, // Set true if using SSL (port 465)
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS,
+    },
+  });
+
+  for (let i = 0; i < 5; i++) {
+    const mailOptions = {
+      from: `Test Mail <noreply@${process.env.DOMAIN}>`,
+      to: process.env.FORWARD_TO, // The email address where emails will be sent
+      subject: `Test Email ${i + 1}`,
+      text: `This is test email number ${i + 1}`,
+      html: `<p>This is test email number <strong>${i + 1}</strong></p>`,
+    };
+
+    try {
+      // Send each email
+      await transporter.sendMail(mailOptions);
+      console.log(`Sent test email #${i + 1}`);
+    } catch (error) {
+      console.error(`Error sending test email #${i + 1}:`, error);
+    }
+  }
+}
+
 // Start the Express server (optional, useful for other routes)
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  // Call sendConsecutiveEmails after server starts
+  sendConsecutiveEmails();
+});
